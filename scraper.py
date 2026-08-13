@@ -186,6 +186,10 @@ def main():
             time.sleep(0.5)
         print(f"  {len(noticias)} noticia(s) única(s) encontradas (de {len(op['queries'])} variantes de búsqueda)")
 
+        # Agrupar por ciudad detectada -> fusionar el mejor dato de cada grupo
+        # (una noticia puede decir el barrio, otra el circuito/subestacion del
+        # mismo hecho; no queremos quedarnos solo con la primera que aparezca)
+        grupos = {}  # ciudad -> {info fusionada, detalle, fuente, fecha}
         for n in noticias:
             texto = extraer_texto_articulo(n["link"])
             if not texto:
@@ -197,32 +201,49 @@ def main():
                 if c in normalizar(n["title"]).lower() or c in normalizar(texto[:500]).lower():
                     ciudad = c.title()
                     break
-            lat, lng = geocodificar_ciudad(ciudad, op["lat"], op["lng"])
 
+            g = grupos.setdefault(ciudad, {
+                "subestacion": "N/D", "circuito": "N/D", "inicio": "—", "fin": "—",
+                "barrios": [], "detalle": n["title"][:180],
+                "fecha_reporte": n["published"].strftime("%Y-%m-%d %H:%M"), "fuente": n["link"],
+            })
+            if g["subestacion"] == "N/D" and info["subestacion"] != "N/D":
+                g["subestacion"] = info["subestacion"]
+                g["fuente"] = n["link"]  # la fuente mas informativa manda
+            if g["circuito"] == "N/D" and info["circuito"] != "N/D":
+                g["circuito"] = info["circuito"]
+            if g["inicio"] == "—" and info["inicio"] != "—":
+                g["inicio"], g["fin"] = info["inicio"], info["fin"]
+            for b in info["barrios"]:
+                if b not in g["barrios"]:
+                    g["barrios"].append(b)
+
+        for ciudad, g in grupos.items():
+            lat, lng = geocodificar_ciudad(ciudad, op["lat"], op["lng"])
             evento = {
                 "operador": op["nombre"], "ciudad": ciudad, "lat": lat, "lng": lng,
-                "subestacion": info["subestacion"], "circuito": info["circuito"],
-                "inicio": info["inicio"], "fin": info["fin"],
-                "barrios": info["barrios"] if info["barrios"] else [ciudad],
-                "detalle": n["title"][:180],
-                "fecha_reporte": n["published"].strftime("%Y-%m-%d %H:%M"),
-                "fuente": n["link"],
+                "subestacion": g["subestacion"], "circuito": g["circuito"],
+                "inicio": g["inicio"], "fin": g["fin"],
+                "barrios": g["barrios"] if g["barrios"] else [ciudad],
+                "detalle": g["detalle"],
+                "fecha_reporte": g["fecha_reporte"],
+                "fuente": g["fuente"],
             }
             eventos_activos.append(evento)
-            print(f"  + {ciudad} | circuito={info['circuito']} | subestacion={info['subestacion']}")
+            print(f"  + {ciudad} | circuito={g['circuito']} | subestacion={g['subestacion']}")
 
             # Si se detectó circuito o subestación explícito, alimenta la biblioteca histórica
-            if info["circuito"] != "N/D" or info["subestacion"] != "N/D":
+            if g["circuito"] != "N/D" or g["subestacion"] != "N/D":
                 gas_post({
                     "action": "actualizarBiblioteca",
                     "operador": op["nombre"], "departamento": op["departamento"],
-                    "subestacion": info["subestacion"], "circuito": info["circuito"],
+                    "subestacion": g["subestacion"], "circuito": g["circuito"],
                     "barrios_nuevos": evento["barrios"],
-                    "fecha": n["published"].strftime("%Y-%m-%d"),
-                    "fuente": n["link"],
+                    "fecha": g["fecha_reporte"][:10],
+                    "fuente": g["fuente"],
                 })
 
-            time.sleep(1)  # ser amable con los servidores de noticias
+        time.sleep(1)  # ser amable con los servidores de noticias
 
     print(f"\nTotal eventos activos detectados: {len(eventos_activos)}")
     if len(eventos_activos) == 0:
