@@ -40,21 +40,21 @@ if not GAS_URL:
 
 # ── Operadores a monitorear y su región/coordenada base ─────────────
 OPERADORES = [
-    {"nombre": "Enel/Codensa", "query": "Enel cortes de luz",
+    {"nombre": "Enel/Codensa", "queries": ["Enel cortes de luz", "Codensa cortes de luz", "cortes de luz Bogota"],
      "departamento": "Bogotá / Cundinamarca", "lat": 4.65, "lng": -74.10},
-    {"nombre": "Afinia", "query": "Afinia cortes de luz",
+    {"nombre": "Afinia", "queries": ["Afinia cortes de luz", "Afinia trabajos programados", "cortes de luz Cartagena", "cortes de luz Monteria"],
      "departamento": "Bolívar / Cesar / Córdoba / Sucre", "lat": 9.30, "lng": -75.40},
-    {"nombre": "Air-e", "query": "Air-e cortes de luz",
+    {"nombre": "Air-e", "queries": ["Air-e cortes de luz", "cortes de luz Barranquilla", "cortes de luz Riohacha", "cortes de luz Santa Marta"],
      "departamento": "Atlántico / Magdalena / La Guajira", "lat": 10.9, "lng": -74.8},
-    {"nombre": "EPM", "query": "EPM cortes de energia",
+    {"nombre": "EPM", "queries": ["EPM cortes de energia", "EPM cortes de luz Antioquia"],
      "departamento": "Antioquia", "lat": 6.7, "lng": -75.3},
-    {"nombre": "Celsia", "query": "Celsia cortes de energia",
+    {"nombre": "Celsia", "queries": ["Celsia cortes de energia", "cortes de luz Valle del Cauca", "cortes de luz Tolima"],
      "departamento": "Valle del Cauca / Tolima", "lat": 3.9, "lng": -76.3},
-    {"nombre": "Emcali", "query": "Emcali cortes de luz",
+    {"nombre": "Emcali", "queries": ["Emcali cortes de luz", "cortes de luz Cali"],
      "departamento": "Valle del Cauca (Cali)", "lat": 3.45, "lng": -76.53},
-    {"nombre": "CENS", "query": "CENS cortes de energia",
+    {"nombre": "CENS", "queries": ["CENS cortes de energia", "cortes de luz Cucuta"],
      "departamento": "Norte de Santander", "lat": 7.89, "lng": -72.5},
-    {"nombre": "EBSA", "query": "EBSA cortes de energia",
+    {"nombre": "EBSA", "queries": ["EBSA cortes de energia", "cortes de luz Boyaca"],
      "departamento": "Boyacá", "lat": 5.45, "lng": -73.36},
 ]
 
@@ -176,8 +176,15 @@ def main():
 
     for op in OPERADORES:
         print(f"\n=== {op['nombre']} ===")
-        noticias = buscar_noticias(op["query"])
-        print(f"  {len(noticias)} noticia(s) reciente(s) encontradas")
+        noticias = []
+        links_vistos = set()
+        for q in op["queries"]:
+            for n in buscar_noticias(q):
+                if n["link"] not in links_vistos:
+                    links_vistos.add(n["link"])
+                    noticias.append(n)
+            time.sleep(0.5)
+        print(f"  {len(noticias)} noticia(s) única(s) encontradas (de {len(op['queries'])} variantes de búsqueda)")
 
         for n in noticias:
             texto = extraer_texto_articulo(n["link"])
