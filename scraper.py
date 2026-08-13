@@ -161,7 +161,7 @@ def buscar_noticias(query, horas_atras=24, max_items=6):
     return items
 
 
-def gas_post(payload, timeout=20):
+def gas_post(payload, timeout=55):
     try:
         r = requests.post(GAS_URL, data=json.dumps(payload), timeout=timeout,
                            headers={"Content-Type": "text/plain"})
