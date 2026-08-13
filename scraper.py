@@ -40,21 +40,21 @@ if not GAS_URL:
 
 # ── Operadores a monitorear y su región/coordenada base ─────────────
 OPERADORES = [
-    {"nombre": "Enel/Codensa", "query": "Enel Codensa cortes de luz Bogota",
+    {"nombre": "Enel/Codensa", "query": "Enel cortes de luz",
      "departamento": "Bogotá / Cundinamarca", "lat": 4.65, "lng": -74.10},
-    {"nombre": "Afinia", "query": "Afinia cortes de luz trabajos programados",
+    {"nombre": "Afinia", "query": "Afinia cortes de luz",
      "departamento": "Bolívar / Cesar / Córdoba / Sucre", "lat": 9.30, "lng": -75.40},
-    {"nombre": "Air-e", "query": "Air-e cortes de luz Atlantico Magdalena Guajira",
+    {"nombre": "Air-e", "query": "Air-e cortes de luz",
      "departamento": "Atlántico / Magdalena / La Guajira", "lat": 10.9, "lng": -74.8},
-    {"nombre": "EPM", "query": "EPM cortes de energia Antioquia",
+    {"nombre": "EPM", "query": "EPM cortes de energia",
      "departamento": "Antioquia", "lat": 6.7, "lng": -75.3},
-    {"nombre": "Celsia", "query": "Celsia cortes de energia Valle del Cauca Tolima",
+    {"nombre": "Celsia", "query": "Celsia cortes de energia",
      "departamento": "Valle del Cauca / Tolima", "lat": 3.9, "lng": -76.3},
-    {"nombre": "Emcali", "query": "Emcali cortes de luz Cali mantenimiento",
+    {"nombre": "Emcali", "query": "Emcali cortes de luz",
      "departamento": "Valle del Cauca (Cali)", "lat": 3.45, "lng": -76.53},
-    {"nombre": "CENS", "query": "CENS cortes de energia Norte de Santander",
+    {"nombre": "CENS", "query": "CENS cortes de energia",
      "departamento": "Norte de Santander", "lat": 7.89, "lng": -72.5},
-    {"nombre": "EBSA", "query": "EBSA cortes de energia Boyaca",
+    {"nombre": "EBSA", "query": "EBSA cortes de energia",
      "departamento": "Boyacá", "lat": 5.45, "lng": -73.36},
 ]
 
@@ -143,7 +143,7 @@ def parsear_reporte(texto, titulo):
     }
 
 
-def buscar_noticias(query, horas_atras=6, max_items=5):
+def buscar_noticias(query, horas_atras=24, max_items=6):
     q = requests.utils.quote(f"{query} Colombia")
     url = f"https://news.google.com/rss/search?q={q}&hl=es-419&gl=CO&ceid=CO:es-419"
     feed = feedparser.parse(url)
@@ -218,8 +218,13 @@ def main():
             time.sleep(1)  # ser amable con los servidores de noticias
 
     print(f"\nTotal eventos activos detectados: {len(eventos_activos)}")
+    if len(eventos_activos) == 0:
+        print("Sin eventos nuevos en esta corrida: no se sobreescribe el mapa (se deja el estado anterior).")
+        return
     resultado = gas_post({"action": "saveCortes", "data": eventos_activos})
-    print("Resultado saveCortes:", resultado)
+    print("Resultado saveCortes:", json.dumps(resultado))
+    if not resultado.get("ok"):
+        raise SystemExit(f"saveCortes fallo: {resultado}")
 
 
 if __name__ == "__main__":
