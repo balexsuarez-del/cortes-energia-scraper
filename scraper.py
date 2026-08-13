@@ -102,6 +102,30 @@ RE_CIRCUITO = re.compile(r"[Cc]ircuito[s]?\s+([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚ
 RE_SUBESTACION = re.compile(r"[Ss]ubestaci[oó]n\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñA-Z]*(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]*)?)")
 RE_HORARIO = re.compile(r"(\d{1,2}:\d{2}\s*(?:a\.?m\.?|p\.?m\.?)?)\s*[a-zA–—-]{1,3}\s*(\d{1,2}:\d{2}\s*(?:a\.?m\.?|p\.?m\.?)?)")
 RE_BARRIOS = re.compile(r"[Bb]arrio[s]?\s*(?:afectados)?\s*:?\s*([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ,]{3,150})")
+RE_RESUELTO = re.compile(r"restablec|normaliz|solucion|se recuper|ya cuenta con el suministro|servicio.{0,15}restablecido", re.IGNORECASE)
+
+
+def detectar_estado(texto, fin_str):
+    """Heurística honesta: si el texto dice explícitamente que se
+    restableció el servicio, o la hora de fin reportada ya pasó respecto
+    a la hora actual en Colombia, se marca 'resuelto'. Si no hay
+    evidencia de ninguna de las dos cosas, se asume 'activo' (más seguro
+    para el usuario que asumir resuelto sin evidencia)."""
+    if RE_RESUELTO.search(texto[:4000]):
+        return "resuelto"
+    m = re.match(r"(\d{1,2}):(\d{2})", fin_str or "")
+    if m:
+        try:
+            ahora_co = datetime.now(timezone.utc) - timedelta(hours=5)
+            hora_fin = ahora_co.replace(hour=int(m.group(1)), minute=int(m.group(2)), second=0, microsecond=0)
+            es_pm = "p.m" in (fin_str or "").lower() or "pm" in (fin_str or "").lower()
+            if es_pm and hora_fin.hour < 12:
+                hora_fin = hora_fin.replace(hour=hora_fin.hour + 12)
+            if ahora_co > hora_fin:
+                return "resuelto"
+        except Exception:
+            pass
+    return "activo"
 
 
 def extraer_texto_articulo(url, timeout=10):
@@ -211,9 +235,10 @@ def main():
 
             g = grupos.setdefault(ciudad, {
                 "subestacion": "N/D", "circuito": "N/D", "inicio": "—", "fin": "—",
-                "barrios": [], "detalle": n["title"][:180],
+                "barrios": [], "detalle": n["title"][:180], "texto_completo": "",
                 "fecha_reporte": n["published"].strftime("%Y-%m-%d %H:%M"), "fuente": n["link"],
             })
+            g["texto_completo"] += " " + texto[:2000]
             if g["subestacion"] == "N/D" and info["subestacion"] != "N/D":
                 g["subestacion"] = info["subestacion"]
                 g["fuente"] = n["link"]  # la fuente mas informativa manda
@@ -227,6 +252,7 @@ def main():
 
         for ciudad, g in grupos.items():
             lat, lng = geocodificar_ciudad(ciudad, op["lat"], op["lng"])
+            estado = detectar_estado(g["texto_completo"], g["fin"])
             evento = {
                 "operador": op["nombre"], "ciudad": ciudad, "lat": lat, "lng": lng,
                 "subestacion": g["subestacion"], "circuito": g["circuito"],
@@ -235,6 +261,7 @@ def main():
                 "detalle": g["detalle"],
                 "fecha_reporte": g["fecha_reporte"],
                 "fuente": g["fuente"],
+                "estado": estado,
             }
             eventos_activos.append(evento)
             print(f"  + {ciudad} | circuito={g['circuito']} | subestacion={g['subestacion']}")
