@@ -161,14 +161,21 @@ def buscar_noticias(query, horas_atras=24, max_items=6):
     return items
 
 
-def gas_post(payload, timeout=55):
-    try:
-        r = requests.post(GAS_URL, data=json.dumps(payload), timeout=timeout,
-                           headers={"Content-Type": "text/plain"})
-        return r.json()
-    except Exception as e:
-        print(f"  ! Error llamando a GAS ({payload.get('action')}): {e}")
-        return {"ok": False, "error": str(e)}
+def gas_post(payload, timeout=55, intentos=3):
+    ultimo_error = None
+    for intento in range(1, intentos + 1):
+        try:
+            r = requests.post(GAS_URL, data=json.dumps(payload), timeout=timeout,
+                               headers={"Content-Type": "text/plain"})
+            if not r.text.strip():
+                raise ValueError("Respuesta vacía de Apps Script")
+            return r.json()
+        except Exception as e:
+            ultimo_error = e
+            print(f"  ! Intento {intento}/{intentos} fallo para {payload.get('action')}: {e}")
+            if intento < intentos:
+                time.sleep(5 * intento)  # backoff: 5s, 10s...
+    return {"ok": False, "error": str(ultimo_error)}
 
 
 def main():
