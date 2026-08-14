@@ -185,6 +185,41 @@ def buscar_noticias(query, horas_atras=24, max_items=6):
     return items
 
 
+def gas_get(params, timeout=55, intentos=3):
+    ultimo_error = None
+    for intento in range(1, intentos + 1):
+        try:
+            r = requests.get(GAS_URL, params=params, timeout=timeout)
+            if not r.text.strip():
+                raise ValueError("Respuesta vacía de Apps Script")
+            return r.json()
+        except Exception as e:
+            ultimo_error = e
+            print(f"  ! Intento {intento}/{intentos} fallo (getCortes): {e}")
+            if intento < intentos:
+                time.sleep(5 * intento)
+    return {"ok": False, "error": str(ultimo_error)}
+
+
+def clave_evento(ev):
+    return (ev.get("operador", "").strip().lower(), ev.get("ciudad", "").strip().lower())
+
+
+def reconciliar_por_fecha(eventos, hoy_str):
+    """Antes de fusionar con lo nuevo: descarta eventos ya vencidos
+    (fecha_evento anterior a hoy) y pasa 'pendiente' -> 'activo' cuando
+    el dia programado ya llego."""
+    reconciliados = []
+    for ev in eventos:
+        fecha_ev = (ev.get("fecha_evento") or ev.get("fecha_reporte") or "")[:10]
+        if fecha_ev and fecha_ev < hoy_str:
+            continue  # vencido, se descarta
+        if fecha_ev == hoy_str and ev.get("estado") == "pendiente":
+            ev["estado"] = "activo"
+        reconciliados.append(ev)
+    return reconciliados
+
+
 def gas_post(payload, timeout=55, intentos=3):
     ultimo_error = None
     for intento in range(1, intentos + 1):
@@ -253,6 +288,7 @@ def main():
         for ciudad, g in grupos.items():
             lat, lng = geocodificar_ciudad(ciudad, op["lat"], op["lng"])
             estado = detectar_estado(g["texto_completo"], g["fin"])
+            hoy_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
             evento = {
                 "operador": op["nombre"], "ciudad": ciudad, "lat": lat, "lng": lng,
                 "subestacion": g["subestacion"], "circuito": g["circuito"],
@@ -260,6 +296,7 @@ def main():
                 "barrios": g["barrios"] if g["barrios"] else [ciudad],
                 "detalle": g["detalle"],
                 "fecha_reporte": g["fecha_reporte"],
+                "fecha_evento": hoy_str,
                 "fuente": g["fuente"],
                 "estado": estado,
             }
@@ -279,11 +316,28 @@ def main():
 
         time.sleep(1)  # ser amable con los servidores de noticias
 
-    print(f"\nTotal eventos activos detectados: {len(eventos_activos)}")
-    if len(eventos_activos) == 0:
-        print("Sin eventos nuevos en esta corrida: no se sobreescribe el mapa (se deja el estado anterior).")
+    print(f"\nTotal eventos nuevos detectados en esta corrida: {len(eventos_activos)}")
+
+    hoy_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    actuales_resp = gas_get({"action": "getCortes"})
+    actuales = actuales_resp.get("eventos", []) if actuales_resp.get("ok") else []
+    print(f"Eventos ya activos en el mapa (antes de reconciliar): {len(actuales)}")
+
+    actuales_reconciliados = reconciliar_por_fecha(actuales, hoy_str)
+    print(f"Eventos tras reconciliar por fecha (vencidos descartados, pendiente->activo si tocaba): {len(actuales_reconciliados)}")
+
+    fusion = {clave_evento(ev): ev for ev in actuales_reconciliados}
+    for ev in eventos_activos:
+        fusion[clave_evento(ev)] = ev  # lo nuevo de esta corrida reemplaza lo viejo de esa misma ciudad+operador
+
+    lista_final = list(fusion.values())
+    print(f"Total final tras fusion: {len(lista_final)}")
+
+    if len(lista_final) == 0:
+        print("Lista final vacia: no se sobreescribe el mapa por seguridad.")
         return
-    resultado = gas_post({"action": "saveCortes", "data": eventos_activos})
+
+    resultado = gas_post({"action": "saveCortes", "data": lista_final})
     print("Resultado saveCortes:", json.dumps(resultado))
     if not resultado.get("ok"):
         raise SystemExit(f"saveCortes fallo: {resultado}")
