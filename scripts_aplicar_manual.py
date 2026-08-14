@@ -10,6 +10,7 @@ import os
 import json
 import time
 import requests
+from datetime import datetime, timezone
 
 GAS_URL = os.environ.get("GAS_URL", "").strip()
 EVENTOS_JSON = os.environ.get("EVENTOS", "[]")
@@ -55,6 +56,20 @@ def clave(ev):
     return (ev.get("operador", "").strip().lower(), ev.get("ciudad", "").strip().lower())
 
 
+def reconciliar_por_fecha(eventos, hoy_str):
+    """Descarta eventos vencidos (fecha_evento anterior a hoy) y pasa
+    'pendiente' -> 'activo' cuando el dia programado ya llego."""
+    reconciliados = []
+    for ev in eventos:
+        fecha_ev = (ev.get("fecha_evento") or ev.get("fecha_reporte") or "")[:10]
+        if fecha_ev and fecha_ev < hoy_str:
+            continue
+        if fecha_ev == hoy_str and ev.get("estado") == "pendiente":
+            ev["estado"] = "activo"
+        reconciliados.append(ev)
+    return reconciliados
+
+
 def main():
     nuevos = json.loads(EVENTOS_JSON)
     print(f"Eventos nuevos recibidos: {len(nuevos)}")
@@ -63,7 +78,11 @@ def main():
     actuales = actuales_resp.get("eventos", []) if actuales_resp.get("ok") else []
     print(f"Eventos activos actuales en el mapa: {len(actuales)}")
 
-    fusion = {clave(ev): ev for ev in actuales}
+    hoy_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    actuales_reconciliados = reconciliar_por_fecha(actuales, hoy_str)
+    print(f"Tras reconciliar por fecha: {len(actuales_reconciliados)}")
+
+    fusion = {clave(ev): ev for ev in actuales_reconciliados}
     for ev in nuevos:
         fusion[clave(ev)] = ev  # el nuevo reemplaza al viejo de esa misma ciudad+operador
 
