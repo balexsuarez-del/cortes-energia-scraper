@@ -3,6 +3,9 @@ name: Diagnostico Cortes
 on:
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   diagnostico:
     runs-on: ubuntu-latest
