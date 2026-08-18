@@ -1,0 +1,28 @@
+name: Diagnostico Cortes
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repo
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar dependencias
+        run: pip install requests
+      - name: Ejecutar diagnostico
+        env:
+          GAS_URL: ${{ secrets.GAS_URL }}
+        run: python diagnostico.py
+      - name: Commit resultado
+        run: |
+          git config user.name "diagnostico-bot"
+          git config user.email "diagnostico@bot.local"
+          git add diagnostico_cortes.json
+          git commit -m "Diagnostico $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "sin cambios"
+          git push
