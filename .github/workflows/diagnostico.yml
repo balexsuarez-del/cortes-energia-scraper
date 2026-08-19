@@ -21,11 +21,13 @@ jobs:
       - name: Ejecutar diagnostico
         env:
           GAS_URL: ${{ secrets.GAS_URL }}
-        run: python diagnostico.py
+        run: |
+          python diagnostico.py
+          python diagnostico_biblioteca.py
       - name: Commit resultado
         run: |
           git config user.name "diagnostico-bot"
           git config user.email "diagnostico@bot.local"
-          git add diagnostico_cortes.json
+          git add diagnostico_cortes.json diagnostico_biblioteca.json
           git commit -m "Diagnostico $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "sin cambios"
           git push
