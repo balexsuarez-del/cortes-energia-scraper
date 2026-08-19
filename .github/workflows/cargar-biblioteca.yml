@@ -1,7 +1,13 @@
-name: Cargar catalogo Afinia a Biblioteca
+name: Cargar catalogo a Biblioteca
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      script:
+        description: 'Nombre del script a correr'
+        required: true
+        default: 'cargar_biblioteca_afinia.py'
+        type: string
 
 jobs:
   cargar:
@@ -18,4 +24,4 @@ jobs:
       - name: Cargar catalogo
         env:
           GAS_URL: ${{ secrets.GAS_URL }}
-        run: python cargar_biblioteca_afinia.py
+        run: python ${{ github.event.inputs.script }}
