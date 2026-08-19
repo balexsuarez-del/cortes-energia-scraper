@@ -1,0 +1,21 @@
+name: Cargar catalogo Afinia a Biblioteca
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  cargar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repo
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar dependencias
+        run: pip install requests
+      - name: Cargar catalogo
+        env:
+          GAS_URL: ${{ secrets.GAS_URL }}
+        run: python cargar_biblioteca_afinia.py
