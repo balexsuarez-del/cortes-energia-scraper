@@ -10,7 +10,7 @@ import os
 import json
 import time
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 GAS_URL = os.environ.get("GAS_URL", "").strip()
 EVENTOS_JSON = os.environ.get("EVENTOS", "[]")
@@ -57,14 +57,19 @@ def clave(ev):
 
 
 def reconciliar_por_fecha(eventos, hoy_str):
-    """Descarta eventos vencidos (fecha_evento anterior a hoy) y pasa
-    'pendiente' -> 'activo' cuando el dia programado ya llego."""
+    """Descarta eventos mas viejos que ayer, marca los de ayer como
+    'historico' (gris), y pasa 'pendiente' -> 'activo' cuando el dia
+    programado ya llego."""
+    ayer_dt = datetime.strptime(hoy_str, "%Y-%m-%d") - timedelta(days=1)
+    ayer_str = ayer_dt.strftime("%Y-%m-%d")
     reconciliados = []
     for ev in eventos:
         fecha_ev = (ev.get("fecha_evento") or ev.get("fecha_reporte") or "")[:10]
-        if fecha_ev and fecha_ev < hoy_str:
+        if fecha_ev and fecha_ev < ayer_str:
             continue
-        if fecha_ev == hoy_str and ev.get("estado") == "pendiente":
+        if fecha_ev == ayer_str:
+            ev["estado"] = "historico"
+        elif fecha_ev == hoy_str and ev.get("estado") == "pendiente":
             ev["estado"] = "activo"
         reconciliados.append(ev)
     return reconciliados
