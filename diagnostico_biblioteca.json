@@ -1271,8 +1271,96 @@
     "circuito": "Circuito Suba, Circuito Fontibon",
     "barrios": "Intervenciones puntuales de repotenciacion",
     "primera_vez": "Mon Aug 24 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
-    "ultima_vez": "Sun Aug 23 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
-    "menciones": "2",
+    "ultima_vez": "Mon Aug 24 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "menciones": "3",
     "fuente": "usuario (comunicado Enel)"
+  },
+  {
+    "operador": "Enel/Codensa",
+    "departamento": "Bogotá (Suba, Fontibón)",
+    "subestacion": "N/D",
+    "circuito": "Circuito Suba",
+    "barrios": "Repotenciación de circuitos",
+    "primera_vez": "Mon Aug 24 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "ultima_vez": "Mon Aug 24 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "menciones": "2",
+    "fuente": "archivo subido (reporte)"
+  },
+  {
+    "operador": "Emcali",
+    "departamento": "Cali (Valle del Cauca)",
+    "subestacion": "N/D",
+    "circuito": "Circuito Alto Menga",
+    "barrios": "Sector servido por el circuito Alto Menga",
+    "primera_vez": "Mon Aug 24 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "ultima_vez": "Mon Aug 24 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "menciones": "2",
+    "fuente": "archivo subido (reporte)"
+  },
+  {
+    "operador": "Enel/Codensa",
+    "departamento": "Bogotá (Suba, Fontibón)",
+    "subestacion": "Circuito Suba, Circuito Fontibón",
+    "circuito": "Circuito Suba, Circuito Fontibón",
+    "barrios": "Repotenciación de circuitos",
+    "primera_vez": "Wed Aug 26 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "ultima_vez": "Wed Aug 26 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "menciones": "1",
+    "fuente": ""
+  },
+  {
+    "operador": "Emcali",
+    "departamento": "Cali (Valle del Cauca)",
+    "subestacion": "Circuito Alto Menga",
+    "circuito": "Circuito Alto Menga",
+    "barrios": "Sector servido por el circuito Alto Menga|Sectores del norte servidos por el circuito",
+    "primera_vez": "Wed Aug 26 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "ultima_vez": "Fri Aug 28 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "menciones": "3",
+    "fuente": ""
+  },
+  {
+    "operador": "Enel/Codensa",
+    "departamento": "Bogotá (Chapinero)",
+    "subestacion": "Circuito Chapinero/Chicó",
+    "circuito": "Circuito Chapinero/Chicó",
+    "barrios": "Chicó Norte (Cra. 12-15 entre Cl. 92-95)",
+    "primera_vez": "Wed Aug 26 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "ultima_vez": "Thu Aug 27 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "menciones": "2",
+    "fuente": ""
+  },
+  {
+    "operador": "Enel/Codensa",
+    "departamento": "Bogotá (Suba)",
+    "subestacion": "Circuito Suba",
+    "circuito": "Circuito Suba",
+    "barrios": "Niza Sur (Cl. 126-128 con Cra. 69-71) 9am-12pm|San Cayetano 2pm-5pm",
+    "primera_vez": "Wed Aug 26 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "ultima_vez": "Thu Aug 27 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "menciones": "2",
+    "fuente": ""
+  },
+  {
+    "operador": "Afinia",
+    "departamento": "Cartagena / Turbaco",
+    "subestacion": "Circuito Ternera 6, Circuito Villa Estrella 1",
+    "circuito": "Circuito Ternera 6, Circuito Villa Estrella 1",
+    "barrios": "Turbaco|Urb. La Cruz (Ternera 6)|Las Américas (Villa Estrella 1)",
+    "primera_vez": "Wed Aug 26 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "ultima_vez": "Thu Aug 27 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "menciones": "2",
+    "fuente": ""
+  },
+  {
+    "operador": "Afinia",
+    "departamento": "Magdalena/Bolívar (San Zenón, San Sebastián de Buenavista)",
+    "subestacion": "Circuito Mompox 5",
+    "circuito": "Circuito Mompox 5",
+    "barrios": "Zona rural de San Zenón y San Sebastián de Buenavista",
+    "primera_vez": "Wed Aug 26 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "ultima_vez": "Thu Aug 27 2026 19:00:00 GMT-0500 (Colombia Standard Time)",
+    "menciones": "2",
+    "fuente": ""
   }
 ]
